@@ -3,28 +3,34 @@ package server;
 /**
  * Created by Svirinstel on 21.03.17.
  */
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.util.Scanner;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
 /**
  * Created by Svirinstel on 18.03.17.
  */
 public class ClientHandler implements Runnable {
 
+    private String clientName;
+
     private Socket socket;
+    private MessageServer messageServer;
 
-    private Scanner inStream;
-    static int clientsCount;
+    private DataInputStream inStream;
+    private DataOutputStream outStream;
 
-    public ClientHandler(Socket socket) {
+    public ClientHandler(Socket socket, MessageServer messageServer) {
         this.socket = socket;
+        this.messageServer = messageServer;
         try {
-            inStream = new Scanner(socket.getInputStream());
+            inStream = new DataInputStream(socket.getInputStream());
+            outStream = new DataOutputStream(socket.getOutputStream());
 
-            clientsCount++;
-
-            System.out.println("Client " + clientsCount + " is connected.");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -34,27 +40,55 @@ public class ClientHandler implements Runnable {
     @Override
     public void run() {
 
-        while (true) {
-            if (inStream.hasNext()) {
-                String inputMessage = inStream.nextLine();
-                if (inputMessage.equalsIgnoreCase("END_SESSION")) break;
-                System.out.println("Client " + clientsCount + ": " + inputMessage);
-            }
+        try {
+            while (true) {
 
-            try {
+                String inputMessage = inStream.readUTF();
+
+                if (inputMessage != null) {
+
+                    if (clientName == null) {
+                        authClient(inputMessage);
+//                    } else if (inputMessage.equalsIgnoreCase("END_SESSION")) {
+//                        break;
+                    } else {
+
+                        String currentTime = new SimpleDateFormat("HH:mm:ss").format(Calendar.getInstance().getTime());
+                        messageServer.sendMessageToAllClients(currentTime + " " + clientName + ": " + inputMessage);
+                    }
+                }
+
                 Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+
             }
-
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
-
-        System.out.println("Client " + clientsCount + " is disconnect");
 
         try {
             socket.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public synchronized void sendMessage(String outMessage) {
+        try {
+            outStream.writeUTF(outMessage);
+            outStream.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void authClient(String message) {
+        String[] auth = message.split("|");
+        if (auth[0] != "/auth") return;
+
+        clientName = auth[1];
+
+        System.err.println("Client " + clientName + " was connected.");
     }
 }

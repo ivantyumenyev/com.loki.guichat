@@ -10,9 +10,13 @@ import java.awt.event.ActionListener;
  */
 public class MainView extends JFrame{
 
+    private MessageSender sender;
+
 //    Authorization
     private JPanel authPanel;
     private JButton loginBtn;
+    private JTextField nameFld;
+    private JPasswordField passFld;
 
 //    Message
     private JPanel messagePanel;
@@ -24,11 +28,14 @@ public class MainView extends JFrame{
 
     public MainView() {
 
-
         initMainFrame();
         initChatPanel();
         initAuthPanel();
 
+    }
+
+    public void setSender(MessageSender sender) {
+        this.sender = sender;
     }
 
     private void initMainFrame(){
@@ -67,7 +74,7 @@ public class MainView extends JFrame{
         JLabel nameLbl = new JLabel("Name");
         namePanel.add(nameLbl);
 
-        JTextField nameFld = new JTextField(10);
+        nameFld = new JTextField(10);
         namePanel.add(nameFld);
 
         nameLbl.setLabelFor(nameFld);
@@ -81,7 +88,7 @@ public class MainView extends JFrame{
         JLabel passLbl = new JLabel("Password");
         passPanel.add(passLbl);
 
-        JPasswordField passFld = new JPasswordField(10);
+        passFld = new JPasswordField(10);
         authPanel.add(passFld);
 
         passLbl.setLabelFor(passFld);
@@ -97,8 +104,15 @@ public class MainView extends JFrame{
     }
 
     private void login(){
-        authPanel.setVisible(false);
-        initMessagePanel();
+
+        String login = nameFld.getText();
+        String password = String.valueOf(passFld.getPassword());
+
+        if (sender.login(login,password)){
+            authPanel.setVisible(false);
+            initMessagePanel();
+        }
+
     }
 
     public void initMessagePanel(){
@@ -133,6 +147,10 @@ public class MainView extends JFrame{
 
     private void sendMessage(){
 
+    }
+
+    public void addChatMessage(String message){
+        chatArea.append(message);
     }
 
 }

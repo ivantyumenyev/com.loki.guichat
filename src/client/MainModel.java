@@ -11,6 +11,8 @@ import java.net.Socket;
  */
 public class MainModel {
 
+    private MessageReceiver receiver;
+
     private Socket socket;
     private DataInputStream inStream;
     private DataOutputStream outStream;
@@ -30,24 +32,34 @@ public class MainModel {
 
             initInputThread();
 
+            inThread.start();
+
         } catch (IOException e) {
             e.printStackTrace();
         }
 
     }
 
+    public void setReceiver(MessageReceiver receiver) {
+        this.receiver = receiver;
+    }
+
     private void initInputThread(){
-        Thread inThread = new Thread(new Runnable() {
+        inThread = new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
                     String message = inStream.readUTF();
 
-                    if (inStream != null) {
-                        
+                    if (message != null) {
+                        receiver.addNewChatMessage(message);
                     }
 
+                    Thread.sleep(100);
+
                 } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
@@ -63,5 +75,10 @@ public class MainModel {
         }
     }
 
+    public boolean authorize(String userName, String password) {
+        String loginMessage = "/auth|" + "|" + userName + "|" + password;
+        sendMessage(loginMessage);
+        return true;
+    }
 
 }
