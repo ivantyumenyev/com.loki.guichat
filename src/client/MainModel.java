@@ -24,6 +24,13 @@ public class MainModel {
 
     public MainModel() {
 
+    }
+
+    public void setReceiver(MessageReceiver receiver) {
+        this.receiver = receiver;
+    }
+
+    public void connect(){
         try {
             socket = new Socket(SERVER_NAME,SERVER_SOCKET);
 
@@ -37,11 +44,6 @@ public class MainModel {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-    }
-
-    public void setReceiver(MessageReceiver receiver) {
-        this.receiver = receiver;
     }
 
     private void initInputThread(){
@@ -49,13 +51,15 @@ public class MainModel {
             @Override
             public void run() {
                 try {
-                    String message = inStream.readUTF();
+                    while (true) {
+                        String message = inStream.readUTF();
 
-                    if (message != null) {
-                        receiver.addNewChatMessage(message);
+                        if (message != null) {
+                            receiver.addNewChatMessage(message + "\n");
+                        }
+
+                        Thread.sleep(100);
                     }
-
-                    Thread.sleep(100);
 
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -76,7 +80,7 @@ public class MainModel {
     }
 
     public boolean authorize(String userName, String password) {
-        String loginMessage = "/auth|" + "|" + userName + "|" + password;
+        String loginMessage = "/auth|" + userName + "|" + password;
         sendMessage(loginMessage);
         return true;
     }

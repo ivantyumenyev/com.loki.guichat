@@ -24,6 +24,8 @@ public class ClientHandler implements Runnable {
     private DataInputStream inStream;
     private DataOutputStream outStream;
 
+    private boolean connected;
+
     public ClientHandler(Socket socket, MessageServer messageServer) {
         this.socket = socket;
         this.messageServer = messageServer;
@@ -46,15 +48,12 @@ public class ClientHandler implements Runnable {
                 String inputMessage = inStream.readUTF();
 
                 if (inputMessage != null) {
-
                     if (clientName == null) {
                         authClient(inputMessage);
-//                    } else if (inputMessage.equalsIgnoreCase("END_SESSION")) {
-//                        break;
+                        connected = true;
+                        sendConnectedStatus();
                     } else {
-
-                        String currentTime = new SimpleDateFormat("HH:mm:ss").format(Calendar.getInstance().getTime());
-                        messageServer.sendMessageToAllClients(currentTime + " " + clientName + ": " + inputMessage);
+                        sendMessageToAllClients(inputMessage);
                     }
                 }
 
@@ -62,13 +61,15 @@ public class ClientHandler implements Runnable {
 
             }
         } catch (IOException e) {
-            e.printStackTrace();
+//            e.printStackTrace();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
         try {
             socket.close();
+            sendConnectedStatus();
+            System.err.println("Client " + clientName + " disconnected.");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -83,12 +84,33 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    private void authClient(String message) {
-        String[] auth = message.split("|");
-        if (auth[0] != "/auth") return;
+    public synchronized boolean isConnected(){
+        return connected;
+    }
 
-        clientName = auth[1];
+    private synchronized void authClient(String message) {
+        String[] auth = message.split("\\|");
 
-        System.err.println("Client " + clientName + " was connected.");
+        switch (auth[0]){
+            case "/auth" :
+                clientName = auth[1];
+                System.err.println("The client " + clientName + " is authorized.");
+                break;
+        }
+    }
+
+    private void sendConnectedStatus(){
+        String currentTime = getCurrentTime();
+        String state = connected ? "connected" : "disconnected";
+        messageServer.sendMessageToAllClients(currentTime + " Client " + clientName + " is " + state);
+    }
+
+    private synchronized void sendMessageToAllClients(String message){
+        String currentTime = getCurrentTime();
+        messageServer.sendMessageToAllClients(currentTime + " " + clientName + ": " + message);
+    }
+
+    private String getCurrentTime(){
+        return new SimpleDateFormat("HH:mm:ss").format(Calendar.getInstance().getTime());
     }
 }

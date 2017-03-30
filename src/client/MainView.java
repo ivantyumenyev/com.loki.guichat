@@ -51,6 +51,7 @@ public class MainView extends JFrame{
         add(listPanel,BorderLayout.CENTER);
 
         chatArea = new JTextArea();
+        chatArea.setEditable(false);
         JScrollPane scrollPane = new JScrollPane(chatArea);
         listPanel.add(scrollPane);
 
@@ -146,7 +147,11 @@ public class MainView extends JFrame{
     }
 
     private void sendMessage(){
-
+        String message = messageFld.getText();
+        if (message != null){
+            sender.sendMessage(message);
+            messageFld.setText("");
+        }
     }
 
     public void addChatMessage(String message){

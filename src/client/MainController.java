@@ -32,6 +32,7 @@ public class MainController implements MessageReceiver, MessageSender{
 
     @Override
     public boolean login(String userName, String password) {
+        model.connect();
         return model.authorize( userName, password );
     }
 }

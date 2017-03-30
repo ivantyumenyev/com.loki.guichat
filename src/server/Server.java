@@ -55,7 +55,11 @@ public class Server implements MessageServer {
     @Override
     public void sendMessageToAllClients(String message) {
         for (ClientHandler client : clients){
-            client.sendMessage(message);
+            if (client.isConnected()) {
+                client.sendMessage(message);
+            } else {
+                clients.remove(client);
+            }
         }
     }
 
